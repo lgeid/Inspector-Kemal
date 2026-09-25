@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Inspeksi Gudang & Diler v7 (Internal Storage Backup & Restore)</title>
+    <!-- Library ExcelJS & FileSaver -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e3a8a;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+            --accent-color: #0284c7;
+            --danger-color: #dc2626;
+            --success-color: #16a34a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 12px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 16px 18px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .alert-info {
+            background-color: #f0fdf4;
+            color: #166534;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #bbf7d0;
+            margin-bottom: 15px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        input, select, textarea {
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+            background-color: #fff;
+            width: 100%;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+        }
+
+        /* 4 Photo Slots Layout */
+        .photo-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .photo-slot-card {
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            background: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 185px;
+        }
+
+        .photo-slot-card.has-photo {
+            border-style: solid;
+            border-color: var(--success-color);
+            background: #f0fdf4;
+        }
+
+        .photo-slot-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+
+        .photo-preview-box {
+            width: 100%;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .photo-preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        .upload-btns-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-btn-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .btn-custom-upload {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 6px;
+            border-radius: 5px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            width: 100%;
+            display: block;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .btn-custom-camera { background: #0284c7; }
+        .btn-custom-gallery { background: #475569; }
+
+        .input-btn-wrapper input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .btn-remove-photo {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .btn-success { background: var(--success-color); color: white; }
+        .btn-danger { background: var(--danger-color); color: white; }
+        .btn-warning { background: #d97706; color: white; }
+        .btn-excel { background: #15803d; color: white; }
+        .btn-excel:hover { background: #166534; }
+        .btn-purple { background: #7c3aed; color: white; }
+        .btn-purple:hover { background: #6d28d9; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-color); }
+
+        /* Table Styling */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        tbody tr:nth-child(even) { background-color: #fafafa; }
+
+        .badge {
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-scrap { background: #fee2e2; color: #991b1b; }
+        .badge-agr { background: #dcfce7; color: #166534; }
+        .badge-cgr { background: #fef3c7; color: #92400e; }
+
+        .table-photo-grid { display: flex; gap: 4px; flex-wrap: wrap; }
+        .table-photo-item { display: flex; flex-direction: column; align-items: center; }
+
+        .photo-thumb {
+            width: 36px;
+            height: 36px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            cursor: pointer;
+        }
+
+        .photo-thumb-tag { font-size: 0.55rem; color: #475569; font-weight: bold; }
+        .status-msg { font-size: 0.75rem; color: #0284c7; margin-top: 4px; font-weight: 600; }
+
+        /* PRINT STYLING */
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .no-print { display: none !important; }
+            .container { max-width: 100%; margin: 0; }
+            .card { border: none; box-shadow: none; padding: 0; margin-bottom: 12px; }
+            .print-header { text-align: center; margin-bottom: 12px; }
+            .print-header h2 { font-size: 1.1rem; text-transform: uppercase; text-decoration: underline; }
+            table { width: 100%; border-collapse: collapse; font-size: 7.5pt; }
+            th, td { border: 1px solid #000 !important; padding: 4px; color: #000; }
+            th { background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; }
+            .lampiran-foto-container { page-break-before: always; margin-top: 15px; }
+            .lampiran-unit-box { border: 1px solid #000; padding: 8px; margin-bottom: 12px; page-break-inside: avoid; }
+            .lampiran-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+            .lampiran-item { border: 1px dashed #666; padding: 4px; text-align: center; }
+            .lampiran-item img { width: 100%; height: 100px; object-fit: contain; display: block; margin-top: 3px; }
+            .lampiran-item-title { font-size: 6.5pt; font-weight: bold; background: #f1f5f9; padding: 2px; border-bottom: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header class="no-print">
+        <div>
+            <h1>Form Inspeksi Gudang & Diler v7</h1>
+            <p>Export Excel (.XLSX) + Backup & Restore File Ke Memori Internal / SD Card</p>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-excel" onclick="exportExcelWithImages()">📊 Export Excel (.xlsx)</button>
+            <button class="btn btn-purple" onclick="backupToInternalStorage()">💾 Backup ke Storage (.json)</button>
+            <div class="input-btn-wrapper" style="width:auto;">
+                <button type="button" class="btn btn-warning">📂 Restore Data</button>
+                <input type="file" accept=".json" onchange="restoreFromInternalStorage(event)">
+            </div>
+            <button class="btn btn-success" onclick="window.print()">🖨️ Cetak / PDF</button>
+        </div>
+    </header>
+
+    <div class="alert-info no-print">
+        💾 <strong>Penyimpanan Memori HP / SD Card:</strong><br>
+        1. Klik <strong>"💾 Backup ke Storage (.json)"</strong> untuk menyimpan database lengkap (+ foto) sebagai file ke folder Download HP / SD Card Anda.<br>
+        2. Gunakan <strong>"📂 Restore Data"</strong> kapan saja untuk memuat ulang database dari file backup jika HP diganti atau data terhapus.
+    </div>
+
+    <!-- Header Cetak -->
+    <div class="print-header" style="display: none;">
+        <h2 style="margin-bottom: 4px;">LAPORAN HASIL INSPEKSI GUDANG & DILER</h2>
+        <p style="font-size: 8pt;">Tanggal Cetak: <span id="print-date"></span></p>
+    </div>
+
+    <!-- Form Input Data -->
+    <div class="card no-print">
+        <div class="card-title">📝 Input Data Inspeksi Unit</div>
+        <form id="inspectionForm" onsubmit="saveData(event)">
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="noRma">No RMA / No Ref</label>
+                    <input type="text" id="noRma" placeholder="Contoh: 3000522052" required>
+                </div>
+                <div class="form-group">
+                    <label for="dealer">Nama Dealer</label>
+                    <input type="text" id="dealer" placeholder="Contoh: PT. CAHAYA INDOKOM" required list="dealerList">
+                    <datalist id="dealerList">
+                        <option value="PT. CAHAYA INDOKOM">
+                        <option value="PT. MAXI MITRA LESTARI">
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label for="model">Model / Tipe Unit</label>
+                    <input type="text" id="model" placeholder="Contoh: 22U401A-B.ATIQ" required>
+                </div>
+                <div class="form-group">
+                    <label for="serialNumber">Serial Number (S/N)</label>
+                    <input type="text" id="serialNumber" placeholder="Contoh: 602BOYQ01250" required>
+                </div>
+                <div class="form-group">
+                    <label for="qty">Qty</label>
+                    <input type="number" id="qty" value="1" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="remarksWh">Remarks WH (Status Gudang)</label>
+                    <select id="remarksWh" required>
+                        <option value="BARET">BARET</option>
+                        <option value="BODY PENYOK">BODY PENYOK</option>
+                        <option value="BODY PECAH">BODY PECAH</option>
+                        <option value="DUS RUSAK">DUS RUSAK</option>
+                        <option value="KOMPLETE/OK">KOMPLETE/OK</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tglReceive">Tanggal Receive</label>
+                    <input type="date" id="tglReceive" required>
+                </div>
+                <div class="form-group">
+                    <label for="hasilInsp">Hasil Inspeksi (Grade)</label>
+                    <select id="hasilInsp" required>
+                        <option value="A-GR">A-GR (Grade A)</option>
+                        <option value="B-GR">B-GR (Grade B)</option>
+                        <option value="C-GR">C-GR (Grade C)</option>
+                        <option value="SCRAP">SCRAP (Afkir/Rusak Berat)</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label for="remarkSvc">Remark SVC (Detail Kerusakan Service)</label>
+                    <input type="text" id="remarkSvc" placeholder="Contoh: COVER BELAKANG BARET < 10cm, MESH CUCI MALING" required>
+                </div>
+
+                <!-- Bagian 4 Slot Foto -->
+                <div class="form-group full-width">
+                    <label style="font-size:0.88rem; color:var(--primary-color);">📸 Lampiran 4 Foto Inspeksi (Otomatis Kompres Kualitas)</label>
+                    <div id="statusMsg" class="status-msg"></div>
+
+                    <div class="photo-slots-grid">
+                        
+                        <!-- Slot 1: Tampak Depan -->
+                        <div class="photo-slot-card" id="slot-card-depan">
+                            <div class="photo-slot-title">1. Tampak Depan</div>
+                            <div class="photo-preview-box" id="slot-preview-depan">
+                                <span style="font-size:1.8rem; color:#94a3b8;">📷</span>
+                            </div>
+                            <div class="upload-btns-group">
+                                <div class="input-btn-wrapper">
+                                    <button type="button" class="btn-custom-upload btn-custom-camera">📷 Kamera Direct</button>
+                                    <input type="file" accept="image/*" capture="camera" onchange="processSinglePhoto('depan', event)">
+                                </div>
+                                <div class="input-btn-wrapper">
+                                    <button type="button" class="btn-custom-upload btn-custom-gallery">📁 File / Galeri</button>
+                                    <input type="file" accept="image/*" onchange="processSinglePhoto('depan', event)">
+                                </div>
+                                <div id="info-depan" style="font-size:0.58rem; color:#0284c7;"></div>
+                                <button type="button" class="btn-remove-photo" id="btn-del-depan" style="display:none;" onclick="removeSlotPhoto('depan')">❌ Hapus</button>
+                            </div>
+                        </div>
+
+                        <!-- Slot 2: Tampak Belakang -->
+                        <div class="photo-slot-card" id="slot-card-belakang">
+                            <div class="photo-slot-title">2. Tampak Belakang</div>
+                            <div class="photo-preview-box" id="slot-preview-belakang">
+                                <span style="font-size:1.8rem; color:#94a3b8;">📷</span>
+                            </div>
+                            <div class="upload-btns-group">
+                                <div class="input-btn-wrapper">
+                                    <button type="button" class="btn-custom-upload btn-custom-camera">📷 Kamera Direct</button>
+                                    <input type="file" accept="image/*" capture="camera" onchange="processSinglePhoto('belakang', event)">
+                                </div>
+                                <div class="input-btn-wrapper">
+                                    <button type="button" class="btn-custom-upload btn-custom-gallery">📁 File / Galeri</button>
+                                    <input type="file" accept="image/*" onchange="processSinglePhoto('belakang', event)">
+                                </div>
+                                <div id="info-belakang" style="font-size:0.58rem; color:#0284c7;"></div>
+                                <button type="button" class="btn-remove-photo" id="btn-del-belakang" style="display:none;" onclick="removeSlotPhoto('belakang')">❌ Hapus</button>
+                            </div>
+                        </div>
+
+                        <!-- Slot 3: Tampak Rusak -->
+                        <div class="photo-slot-card" id="slot-card-rusak">
+                            <div class="photo-slot-title">3. Tampak Rusak</div>
+                            <div class="photo-preview-box" id="slot-preview-rusak">
+                                <span style="font-size:1.8rem; color:#94a3b8;">📷</span>
+                            </div>
+                            <div class="upload-btns-group">
+                                <div class="input-btn-wrapper">
+                                    <button type="button" class="btn-custom-upload btn-custom-camera">📷 Kamera Direct</button>
+                                    <input type="file" accept="image/*" capture="camera" onchange="processSinglePhoto('rusak', event)">
+                                </div>
+                                <div class="input-btn-wrapper">
+                                    <button type="button" class="btn-custom-upload btn-custom-gallery">📁 File / Galeri</button>
+                                    <input type="file" accept="image/*" onchange="processSinglePhoto('rusak', event)">
+                                </div>
+                                <div id="info-rusak" style="font-size:0.58rem; color:#0284c7;"></div>
+                                <button type="button" class="btn-remove-photo" id="btn-del-rusak" style="display:none;" onclick="removeSlotPhoto('rusak')">❌ Hapus</button>
+                            </div>
+                        </div>
+
+                        <!-- Slot 4: Label Grade / S/N -->
+                        <div class="photo-slot-card" id="slot-card-label">
+                            <div class="photo-slot-title">4. Label Grade / S/N</div>
+                            <div class="photo-preview-box" id="slot-preview-label">
+                                <span style="font-size:1.8rem; color:#94a3b8;">📷</span>
+                            </div>
+                            <div class="upload-btns-group">
+                                <div class="input-btn-wrapper">
+                                    <button type="button" class="btn-custom-upload btn-custom-camera">📷 Kamera Direct</button>
+                                    <input type="file" accept="image/*" capture="camera" onchange="processSinglePhoto('label', event)">
+                                </div>
+                                <div class="input-btn-wrapper">
+                                    <button type="button" class="btn-custom-upload btn-custom-gallery">📁 File / Galeri</button>
+                                    <input type="file" accept="image/*" onchange="processSinglePhoto('label', event)">
+                                </div>
+                                <div id="info-label" style="font-size:0.58rem; color:#0284c7;"></div>
+                                <button type="button" class="btn-remove-photo" id="btn-del-label" style="display:none;" onclick="removeSlotPhoto('label')">❌ Hapus</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary" id="btnSave">💾 Simpan Data Baru</button>
+                <button type="button" class="btn btn-outline" onclick="resetForm()">🔄 Reset Form</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabel Data Hasil Inspeksi -->
+    <div class="card">
+        <div class="card-title" style="justify-content: space-between;">
+            <span>📋 Daftar Hasil Inspeksi Unit</span>
+            <span style="font-size: 0.85rem; font-weight: normal; color: #64748b;" class="no-print">Total: <strong id="totalCount">0</strong> Unit</span>
+        </div>
+        <div class="table-responsive">
+            <table id="inspectionTable">
+                <thead>
+                    <tr>
+                        <th style="width: 30px;">No</th>
+                        <th>No RMA</th>
+                        <th>Dealer</th>
+                        <th>Model</th>
+                        <th>Serial Number</th>
+                        <th style="width: 30px;">Qty</th>
+                        <th>Remarks WH</th>
+                        <th>Tgl Receive</th>
+                        <th>Hasil Insp</th>
+                        <th>Remark SVC</th>
+                        <th class="no-print">Lampiran Foto</th>
+                        <th class="no-print" style="width: 75px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Data dimasukkan via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bagian Lampiran Foto Saat Dicetak/Dipreview -->
+    <div class="card lampiran-foto-container" id="lampiranFotoCard">
+        <div class="card-title">🖼️ Lampiran Foto Inspeksi Unit (Cetak PDF)</div>
+        <div id="lampiranUnitContainer">
+            <!-- Lampiran foto per unit akan di-render di sini -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal Zoom Foto -->
+<div id="imageModal" style="display:none; position:fixed; z-index:999; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; flex-direction:column;" onclick="this.style.display='none'">
+    <img id="modalImg" style="max-width:90%; max-height:80%; border-radius:8px; border:3px solid white; object-fit:contain;">
+    <div id="modalCaption" style="color:white; margin-top:10px; font-weight:bold; font-size:0.9rem;"></div>
+</div>
+
+<script>
+    let currentPhotos = { depan: null, belakang: null, rusak: null, label: null };
+    let inspectionData = JSON.parse(localStorage.getItem('inspection_records_v7')) || [];
+
+    document.getElementById('tglReceive').valueAsDate = new Date();
+    document.getElementById('print-date').innerText = new Date().toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'short', year: 'numeric'
+    });
+
+    if (inspectionData.length === 0) {
+        inspectionData = [
+            {
+                noRma: "3000522052",
+                dealer: "PT. CAHAYA INDOKOM",
+                model: "22U401A-B.ATIQ",
+                serialNumber: "602BOYQ01250",
+                qty: 1,
+                remarksWh: "BARET",
+                tglReceive: "2026-09-24",
+                hasilInsp: "A-GR",
+                remarkSvc: "COVER BELAKANG BARET < 10cm",
+                photos: { depan: null, belakang: null, rusak: null, label: null }
+            }
+        ];
+        saveToLocalStorage();
+    }
+
+    renderTable();
+
+    function processSinglePhoto(slotKey, event) {
+        try {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const statusMsg = document.getElementById('statusMsg');
+            statusMsg.innerText = `Memproses foto ${slotKey}...`;
+
+            const originalKB = (file.size / 1024).toFixed(1);
+            const reader = new FileReader();
+
+            reader.onerror = function() {
+                alert("Gagal membaca berkas foto.");
+                statusMsg.innerText = "";
+            };
+
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    try {
+                        const maxDim = 800;
+                        let w = img.width;
+                        let h = img.height;
+
+                        if (w > h) {
+                            if (w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+                        } else {
+                            if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w;
+                        canvas.height = h;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+
+                        const compressedUrl = canvas.toDataURL('image/jpeg', 0.6);
+                        const compressedKB = Math.round((compressedUrl.length * 3 / 4) / 1024);
+
+                        currentPhotos[slotKey] = compressedUrl;
+                        updateSlotUI(slotKey, compressedUrl, `${originalKB}KB➔${compressedKB}KB`);
+
+                        statusMsg.innerText = `Foto ${slotKey} berhasil dimasukkan! (${compressedKB} KB)`;
+                        setTimeout(() => { statusMsg.innerText = ''; }, 3000);
+
+                    } catch (canvasErr) {
+                        currentPhotos[slotKey] = e.target.result;
+                        updateSlotUI(slotKey, e.target.result, `${originalKB} KB`);
+                        statusMsg.innerText = `Foto ${slotKey} berhasil dimasukkan.`;
+                    }
+                };
+                img.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file);
+
+        } catch (err) {
+            alert("Kesalahan memuat foto: " + err.message);
+        }
+    }
+
+    function updateSlotUI(key, imgDataUrl, infoText) {
+        const card = document.getElementById(`slot-card-${key}`);
+        const previewBox = document.getElementById(`slot-preview-${key}`);
+        const infoDiv = document.getElementById(`info-${key}`);
+        const delBtn = document.getElementById(`btn-del-${key}`);
+
+        if (imgDataUrl) {
+            card.classList.add('has-photo');
+            previewBox.innerHTML = `<img src="${imgDataUrl}" class="photo-preview-img" onclick="showModal('${imgDataUrl}', 'Tampak ${key.toUpperCase()}')">`;
+            infoDiv.innerText = infoText || '';
+            delBtn.style.display = 'block';
+        } else {
+            card.classList.remove('has-photo');
+            previewBox.innerHTML = `<span style="font-size:1.8rem; color:#94a3b8;">📷</span>`;
+            infoDiv.innerText = '';
+            delBtn.style.display = 'none';
+        }
+    }
+
+    function removeSlotPhoto(key) {
+        currentPhotos[key] = null;
+        updateSlotUI(key, null);
+    }
+
+    function saveData(e) {
+        e.preventDefault();
+        const editIdx = parseInt(document.getElementById('editIndex').value);
+
+        const record = {
+            noRma: document.getElementById('noRma').value.trim(),
+            dealer: document.getElementById('dealer').value.trim(),
+            model: document.getElementById('model').value.trim(),
+            serialNumber: document.getElementById('serialNumber').value.trim(),
+            qty: parseInt(document.getElementById('qty').value) || 1,
+            remarksWh: document.getElementById('remarksWh').value,
+            tglReceive: document.getElementById('tglReceive').value,
+            hasilInsp: document.getElementById('hasilInsp').value,
+            remarkSvc: document.getElementById('remarkSvc').value.trim(),
+            photos: { ...currentPhotos }
+        };
+
+        if (editIdx >= 0) {
+            inspectionData[editIdx] = record;
+        } else {
+            inspectionData.push(record);
+        }
+
+        saveToLocalStorage();
+        renderTable();
+        resetForm();
+    }
+
+    function editRecord(index) {
+        const rec = inspectionData[index];
+        document.getElementById('editIndex').value = index;
+        document.getElementById('noRma').value = rec.noRma;
+        document.getElementById('dealer').value = rec.dealer;
+        document.getElementById('model').value = rec.model;
+        document.getElementById('serialNumber').value = rec.serialNumber;
+        document.getElementById('qty').value = rec.qty;
+        document.getElementById('remarksWh').value = rec.remarksWh;
+        document.getElementById('tglReceive').value = rec.tglReceive;
+        document.getElementById('hasilInsp').value = rec.hasilInsp;
+        document.getElementById('remarkSvc').value = rec.remarkSvc;
+
+        currentPhotos = rec.photos ? { ...rec.photos } : { depan: null, belakang: null, rusak: null, label: null };
+        
+        ['depan', 'belakang', 'rusak', 'label'].forEach(k => {
+            updateSlotUI(k, currentPhotos[k]);
+        });
+
+        document.getElementById('btnSave').innerText = "✏️ Update Data";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteRecord(index) {
+        if (confirm("Hapus data inspeksi ini?")) {
+            inspectionData.splice(index, 1);
+            saveToLocalStorage();
+            renderTable();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('inspectionForm').reset();
+        document.getElementById('editIndex').value = "-1";
+        document.getElementById('tglReceive').valueAsDate = new Date();
+        document.getElementById('btnSave').innerText = "💾 Simpan Data Baru";
+        
+        currentPhotos = { depan: null, belakang: null, rusak: null, label: null };
+        ['depan', 'belakang', 'rusak', 'label'].forEach(k => { updateSlotUI(k, null); });
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const lampiranContainer = document.getElementById('lampiranUnitContainer');
+        tbody.innerHTML = '';
+        lampiranContainer.innerHTML = '';
+
+        document.getElementById('totalCount').innerText = inspectionData.length;
+        let totalUnitsWithPhotos = 0;
+
+        inspectionData.forEach((rec, index) => {
+            const tr = document.createElement('tr');
+            let formattedDate = rec.tglReceive;
+            if (rec.tglReceive) {
+                const d = new Date(rec.tglReceive);
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                formattedDate = `${String(d.getDate()).padStart(2, '0')}-${monthNames[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
+            }
+
+            let badgeClass = "badge-cgr";
+            if (rec.hasilInsp.includes("A-GR")) badgeClass = "badge-agr";
+            else if (rec.hasilInsp.includes("SCRAP")) badgeClass = "badge-scrap";
+
+            let photoCellContent = '<div class="table-photo-grid">';
+            let hasAnyPhoto = false;
+            const slotLabels = { depan: 'Depan', belakang: 'Belakang', rusak: 'Rusak', label: 'Label' };
+
+            if (rec.photos) {
+                Object.keys(slotLabels).forEach(k => {
+                    if (rec.photos[k]) {
+                        hasAnyPhoto = true;
+                        photoCellContent += `
+                            <div class="table-photo-item">
+                                <img src="${rec.photos[k]}" class="photo-thumb" onclick="showModal('${rec.photos[k]}', '${slotLabels[k]} - S/N: ${rec.serialNumber}')">
+                                <span class="photo-thumb-tag">${slotLabels[k]}</span>
+                            </div>
+                        `;
+                    }
+                });
+            }
+
+            photoCellContent += '</div>';
+            if (!hasAnyPhoto) photoCellContent = '<span style="color:#94a3b8; font-style:italic;">Kosong</span>';
+
+            tr.innerHTML = `
+                <td style="text-align:center;">${index + 1}</td>
+                <td>${rec.noRma}</td>
+                <td>${rec.dealer}</td>
+                <td>${rec.model}</td>
+                <td><strong>${rec.serialNumber}</strong></td>
+                <td style="text-align:center;">${rec.qty}</td>
+                <td>${rec.remarksWh}</td>
+                <td>${formattedDate}</td>
+                <td><span class="badge ${badgeClass}">${rec.hasilInsp}</span></td>
+                <td>${rec.remarkSvc}</td>
+                <td class="no-print">${photoCellContent}</td>
+                <td class="no-print">
+                    <button class="btn btn-outline" style="padding:2px 5px; font-size:10px;" onclick="editRecord(${index})">✏️</button>
+                    <button class="btn btn-danger" style="padding:2px 5px; font-size:10px;" onclick="deleteRecord(${index})">🗑️</button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+
+            if (hasAnyPhoto) {
+                totalUnitsWithPhotos++;
+                const unitBox = document.createElement('div');
+                unitBox.className = 'lampiran-unit-box';
+                
+                let gridHtml = '<div class="lampiran-grid">';
+                Object.keys(slotLabels).forEach(k => {
+                    if (rec.photos[k]) {
+                        gridHtml += `
+                            <div class="lampiran-item">
+                                <div class="lampiran-item-title">${slotLabels[k].toUpperCase()}</div>
+                                <img src="${rec.photos[k]}">
+                            </div>
+                        `;
+                    }
+                });
+                gridHtml += '</div>';
+
+                unitBox.innerHTML = `
+                    <div style="font-weight:bold; font-size:8pt; border-bottom:1px solid #000; padding-bottom:2px;">
+                        Unit #${index + 1} | S/N: ${rec.serialNumber} | RMA: ${rec.noRma} | Model: ${rec.model} | Grade: ${rec.hasilInsp}
+                    </div>
+                    ${gridHtml}
+                    <div style="font-size:7pt; margin-top:3px;"><b>Kerusakan (SVC):</b> ${rec.remarkSvc}</div>
+                `;
+
+                lampiranContainer.appendChild(unitBox);
+            }
+        });
+
+        const lampCard = document.getElementById('lampiranFotoCard');
+        lampCard.style.display = totalUnitsWithPhotos > 0 ? 'block' : 'none';
+    }
+
+    function saveToLocalStorage() {
+        try {
+            localStorage.setItem('inspection_records_v7', JSON.stringify(inspectionData));
+        } catch (e) {
+            alert("Memori lokal penuh! Hapus beberapa data lama atau gunakan fitur Backup ke Storage.");
+        }
+    }
+
+    function showModal(src, caption) {
+        document.getElementById('modalImg').src = src;
+        document.getElementById('modalCaption').innerText = caption || '';
+        document.getElementById('imageModal').style.display = 'flex';
+    }
+
+    // Export Database ke File JSON di Memori Internal / SD Card
+    function backupToInternalStorage() {
+        if (inspectionData.length === 0) {
+            alert("Tidak ada data untuk dibackup!");
+            return;
+        }
+
+        const dataStr = JSON.stringify(inspectionData, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const fileName = `Backup_Inspeksi_Gudang_${new Date().toISOString().slice(0,10)}.json`;
+
+        if (typeof saveAs !== 'undefined') {
+            saveAs(blob, fileName);
+        } else {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        alert("💾 File backup berhasil diunduh ke Folder Download Memori Internal / SD Card Anda!");
+    }
+
+    // Restore Database dari File JSON
+    function restoreFromInternalStorage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (Array.isArray(importedData)) {
+                    if (confirm(`Apakah Anda yakin ingin memuat ${importedData.length} data inspeksi dari file ini? Data di layar akan diperbarui.`)) {
+                        inspectionData = importedData;
+                        saveToLocalStorage();
+                        renderTable();
+                        alert("✅ Data berhasil dipulihkan dari memori internal!");
+                    }
+                } else {
+                    alert("Format file backup JSON tidak valid!");
+                }
+            } catch (err) {
+                alert("Gagal membaca file backup: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Export ke Excel (.XLSX) Resmi Beserta Foto
+    async function exportExcelWithImages() {
+        if (inspectionData.length === 0) {
+            alert("Tidak ada data inspeksi untuk diexport!");
+            return;
+        }
+
+        if (typeof ExcelJS === 'undefined') {
+            alert("Modul Excel sedang dimuat. Pastikan koneksi internet aktif saat pertama kali menekan tombol ini.");
+            return;
+        }
+
+        try {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet("Hasil Inspeksi Gudang");
+
+            worksheet.columns = [
+                { header: "No", key: "no", width: 6 },
+                { header: "No RMA", key: "noRma", width: 16 },
+                { header: "Nama Dealer", key: "dealer", width: 26 },
+                { header: "Model / Tipe", key: "model", width: 22 },
+                { header: "Serial Number", key: "serialNumber", width: 22 },
+                { header: "Qty", key: "qty", width: 6 },
+                { header: "Remarks WH", key: "remarksWh", width: 16 },
+                { header: "Tgl Receive", key: "tglReceive", width: 14 },
+                { header: "Hasil Insp", key: "hasilInsp", width: 12 },
+                { header: "Remark SVC (Kerusakan)", key: "remarkSvc", width: 35 },
+                { header: "Foto Depan", key: "depan", width: 18 },
+                { header: "Foto Belakang", key: "belakang", width: 18 },
+                { header: "Foto Rusak", key: "rusak", width: 18 },
+                { header: "Foto Label Grade", key: "label", width: 18 }
+            ];
+
+            const headerRow = worksheet.getRow(1);
+            headerRow.font = { bold: true, color: { argb: "FFFFFF" } };
+            headerRow.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "1E3A8A" }
+            };
+            headerRow.alignment = { vertical: "middle", horizontal: "center" };
+            headerRow.height = 25;
+
+            const slotKeys = ["depan", "belakang", "rusak", "label"];
+            const photoColIndex = [10, 11, 12, 13];
+
+            for (let i = 0; i < inspectionData.length; i++) {
+                const rec = inspectionData[i];
+                const rowIndex = i + 2;
+
+                const row = worksheet.addRow({
+                    no: i + 1,
+                    noRma: rec.noRma,
+                    dealer: rec.dealer,
+                    model: rec.model,
+                    serialNumber: rec.serialNumber,
+                    qty: rec.qty,
+                    remarksWh: rec.remarksWh,
+                    tglReceive: rec.tglReceive,
+                    hasilInsp: rec.hasilInsp,
+                    remarkSvc: rec.remarkSvc
+                });
+
+                row.height = 70;
+                row.alignment = { vertical: "middle" };
+
+                if (rec.photos) {
+                    slotKeys.forEach((key, sIdx) => {
+                        const base64Data = rec.photos[key];
+                        if (base64Data && base64Data.startsWith("data:image")) {
+                            const imageId = workbook.addImage({
+                                base64: base64Data,
+                                extension: "jpeg"
+                            });
+
+                            worksheet.addImage(imageId, {
+                                tl: { col: photoColIndex[sIdx], row: rowIndex - 1 },
+                                ext: { width: 80, height: 80 }
+                            });
+                        }
+                    });
+                }
+            }
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            saveAs(blob, `Laporan_Inspeksi_Gudang_Foto_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+        } catch (err) {
+            alert("Terjadi kesalahan saat mengeksport Excel: " + err.message);
+        }
+    }
+</script>
+
+</body>
+</html>
